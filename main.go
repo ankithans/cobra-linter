@@ -1,14 +1,13 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"go/ast"
 	"go/parser"
-	"go/printer"
 	"go/token"
 	"log"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -32,31 +31,46 @@ type visitor struct {
 }
 
 func (v *visitor) Visit(node ast.Node) ast.Visitor {
-	// _, ok := node.(*ast.AssignStmt)
-	// if !ok {
-	// 	return v
-	// }
-
-	// selectorExpr, ok := node.(*ast.SelectorExpr)
-	// if !ok {
-	// 	return v
-	// }
-
-	// if strings.Contains(selectorExpr.Sel.String(), "Command") {
-	// ident, ok := node.(*ast.Ident)
-	// if !ok {
-	// 	return v
-	// }
-	// fmt.Println(ident)
-	// }
-
-	if node == nil {
-		return nil
+	compositelit, ok := node.(*ast.CompositeLit)
+	if !ok {
+		return v
 	}
 
-	var buf bytes.Buffer
-	printer.Fprint(&buf, v.fset, node)
-	fmt.Printf("%s: \n- %#v \n\n", buf.String(), node)
+	for i := range compositelit.Elts {
+		kv, ok := compositelit.Elts[i].(*ast.KeyValueExpr)
+		if !ok {
+			return v
+		}
+
+		key := kv.Key.(*ast.Ident).Name
+		val := kv.Value.(*ast.BasicLit).Value
+		l := len(strings.Trim(val, "\""))
+
+		switch key {
+		case "Use":
+			if l < 3 {
+				fmt.Printf("Length of %s should be greater than 3", key)
+				return v
+			}
+		case "Short":
+			if l < 5 {
+				fmt.Printf("Length of %s should be greater than 5", key)
+				return v
+			}
+		case "Long":
+			if l < 15 {
+				fmt.Printf("Length of %s should be greater than 15", key)
+				return v
+			}
+		case "Example":
+			if l < 15 {
+				fmt.Printf("Length of %s should be greater than 15", key)
+				return v
+			}
+		default:
+			panic("Wrong Type")
+		}
+	}
 
 	return v
 }
