@@ -47,5 +47,4 @@ jobs:
         uses: protocol/multiple-go-modules@v1.0
         with:
           run: |
-            set -o pipefail
             staticcheck ./... | sed -e 's@\(.*\)\.go@./\1.go@g'
